@@ -1,0 +1,155 @@
+### EDA
+# Load the necessary libraries
+install.packages("ggplot2")
+library(ggplot2)
+# Load the dataset
+data <- read.csv("C:\\Users\\chang\\OneDrive\\Documents\\study\\taylor's university\\Y2S3\\SIM\\Assignment\\Sleep_Efficiency.csv")
+# View the first few rows of the data
+head(data)
+# View the structure of the dataset
+str(data)
+# Remove the 'ID' column from the cleaned data
+data_clean <- subset(data, select = -ID)
+# View the cleaned data
+head(data_clean)
+# Summary statistics for each column
+summary(data_clean)
+# Identify Missing Values
+# Check the number of missing values in the entire dataset
+sum(is.na(data_clean))
+# Check missing values per column
+colSums(is.na(data_clean))
+# List columns with missing values
+list_na <- colnames(data_clean)[apply(data_clean, 2, anyNA)]
+list_na
+# Handle Missing Values
+# Calculate skewness for a column with missing values
+skewness(data_clean$Awakenings, na.rm = TRUE)
+skewness(data_clean$Caffeine.consumption, na.rm = TRUE)
+skewness(data_clean$Alcohol.consumption, na.rm = TRUE)
+skewness(data_clean$Exercise.frequency, na.rm = TRUE)
+# Impute missing values based on skewness analysis
+data_clean$Awakenings[is.na(data_clean$Awakenings)] <- mean(data_clean$Awakenings, na.rm = TRUE)
+data_clean$Caffeine.consumption[is.na(data_clean$Caffeine.consumption)] <- median(data_clean$Caffeine.consumption, na.rm = TRUE)
+data_clean$Alcohol.consumption[is.na(data_clean$Alcohol.consumption)] <- median(data_clean$Alcohol.consumption, na.rm = TRUE)
+data_clean$Exercise.frequency[is.na(data_clean$Exercise.frequency)] <- mean(data_clean$Exercise.frequency, na.rm = TRUE)
+# Check missing values again
+sum(is.na(data_clean))
+# Compare Summary Statistics Before and After Imputation
+summary(data$Awakenings)
+summary(data_clean$Awakenings)
+summary(data$Caffeine.consumption)
+summary(data_clean$Caffeine.consumption)
+summary(data$Alcohol.consumption)
+summary(data_clean$Alcohol.consumption)
+summary(data$Exercise.frequency)
+summary(data_clean$Exercise.frequency)
+# Plot Histograms for better visualization
+hist(data_clean$Awakenings, main = "Histogram of Awakenings", 
+     xlab = "Awakenings", col = "orange", border = "black")
+hist(data_clean$Caffeine.consumption, main = "Histogram of Caffeine Consumption", 
+     xlab = "Caffeine Consumption (mg)", col = "lightblue", border = "black")
+hist(data_clean$Alcohol.consumption, main = "Histogram of Alcohol Consumption", 
+     xlab = "Alcohol Consumption (Number of Drinks)", col = "lightgreen", border = "black")
+hist(data_clean$Exercise.frequency, main = "Histogram of Exercise Frequency", 
+     xlab = "Exercise Frequency (per week)", col = "lightcoral", border = "black")
+# Identify outliers
+# Identify numeric columns
+numeric_columns <- sapply(data_clean, is.numeric)
+# Loop through each numeric column
+for (col in names(data_clean)[numeric_columns]) {
+  # Identify outliers
+  outliers <- boxplot.stats(data_clean[[col]])$out
+  # Print the outliers
+  cat("Outliers in", col, ":", outliers, "\n")
+}
+# Create boxplots for better visualization
+boxplot(data_clean$Sleep.duration, main = "Sleep Duration", ylab = "Hours (hrs)")
+boxplot(data_clean$Deep.sleep.percentage, main = "Deep Sleep Percentage", ylab = "Percentage (%)")
+boxplot(data_clean$Caffeine.consumption, main = "Caffeine Consumption", ylab = "Milligrams (mg)")
+# Replace Outliers with Median
+median_sleep_duration <- median(data_clean$Sleep.duration, na.rm = TRUE)
+data_clean$Sleep.duration[data_clean$Sleep.duration == 5] <- median_sleep_duration
+data_clean$Sleep.duration[data_clean$Sleep.duration == 10] <- median_sleep_duration
+# Cap the value at the threshold
+data_clean$Deep.sleep.percentage[data_clean$Deep.sleep.percentage < 25] <- 25
+# Compute IQR-based thresholds
+Q1 <- quantile(data_clean$Caffeine.consumption, 0.25, na.rm = TRUE)
+Q3 <- quantile(data_clean$Caffeine.consumption, 0.75, na.rm = TRUE)
+IQR <- Q3 - Q1
+upper_limit <- Q3 + 1.5 * IQR
+data_clean$Caffeine.consumption[data_clean$Caffeine.consumption > upper_limit] <- upper_limit
+# Detect duplicates
+duplicates <- duplicated(data_clean)
+sum(duplicates)
+# Convert categorical variables into factors
+data$Gender <- as.factor(data$Gender)
+data$Smoking.status <- as.factor(data$Smoking.status)
+data$Gender 
+data$Smoking.status
+# Convert Bedtime and Wakeup time to proper datetime formats 
+data$Bedtime <- as.POSIXct(data$Bedtime, format = "%d/%m/%Y %H:%M")
+data$Wakeup.time <- as.POSIXct(data$Wakeup.time, format = "%d/%m/%Y %H:%M")
+data$Bedtime 
+data$Wakeup.time
+# Graphical representation
+# Scatter plot with regression line
+correlation <- cor.test(data_clean$Exercise.frequency, data_clean$Sleep.efficiency, method = "pearson")
+correlation
+ggp <- ggplot(data_clean, aes(x = Exercise.frequency, y = Sleep.efficiency)) 
+ggp + stat_smooth(method = "lm", formula = y ~ x, geom = "smooth")
+ggp
+correlation <- cor.test(data_clean$Alcohol.consumption, data_clean$Sleep.efficiency, method = "pearson")
+correlation
+ggplot(data_clean, aes(x = Alcohol.consumption, y = Sleep.efficiency)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "Alcohol Consumption vs Sleep Efficiency",
+       x = "Alcohol Consumption (Number of Drinks)",
+       y = "Sleep Efficiency (%)") +
+  theme_minimal()
+ggplot(data_clean, aes(x = Exercise.frequency, y = Sleep.efficiency)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "Exercise Frequency vs Sleep Efficiency",
+       x = "Exercise Frequency (per week)",
+       y = "Sleep Efficiency (%)") +
+  theme_minimal()
+### Methods
+# shapiro-wilk test
+shapiro.test(data_clean$Age)
+shapiro.test(data_clean$Gender)
+shapiro.test(data_clean$Sleep.duration)
+shapiro.test(data_clean$Sleep.efficiency)
+shapiro.test(data_clean$REM.sleep.percentage)
+shapiro.test(data_clean$Deep.sleep.percentage)
+shapiro.test(data_clean$Light.sleep.percentage)
+shapiro.test(data_clean$Awakenings)
+shapiro.test(data_clean$Caffeine.consumption)
+shapiro.test(data_clean$Alcohol.consumption)
+shapiro.test(data_clean$Smoking.status)
+shapiro.test(data_clean$Exercise.frequency)
+# correlation test 
+cor.test(data_clean$Age, data_clean$Sleep.efficiency)
+cor.test(data_clean$Sleep.duration, data_clean$Sleep.efficiency)
+cor.test(data_clean$REM.sleep.percentage, data_clean$Sleep.efficiency)
+cor.test(data_clean$Deep.sleep.percentage, data_clean$Sleep.efficiency)
+cor.test(data_clean$Light.sleep.percentage, data_clean$Sleep.efficiency)
+cor.test(data_clean$Awakenings , data_clean$Sleep.efficiency)
+cor.test(data_clean$Caffeine.consumption, data_clean$Sleep.efficiency)
+cor.test(data_clean$Alcohol.consumption, data_clean$Sleep.efficiency)
+cor.test(data_clean$Exercise.frequency, data_clean$Sleep.efficiency)
+# get matrix of the data 
+data.matrix(data_clean)
+# fit the multiple regression model
+model <- lm(Sleep.efficiency ~ Age + Gender + Sleep.duration + REM.sleep.percentage + 
+              Deep.sleep.percentage + Awakenings + 
+              Caffeine.consumption + Alcohol.consumption + Smoking.status + 
+              Exercise.frequency, data = data_clean)
+# display the summary of the model
+summary(model)
+install.packages("car", dependencies = TRUE, repos = "https://cran.rstudio.com/")
+library(car)
+# check the multicollinearity
+vif_values <- vif(model) ###checking multicollinearity
+vif_values
